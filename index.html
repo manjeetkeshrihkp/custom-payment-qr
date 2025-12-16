@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Merchant Payment QR</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#020617;
+  --card:#ffffff;
+  --muted:#64748b;
+  --primary:#4f46e5;
+  --border:#e5e7eb;
+}
+
+*{
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#020617;
+}
+
+.app{
+  width:980px;
+  background:var(--card);
+  border-radius:18px;
+  box-shadow:0 40px 120px rgba(0,0,0,.45);
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  overflow:hidden;
+}
+
+/* LEFT */
+.left{
+  padding:44px;
+}
+
+.left h1{
+  font-size:28px;
+  font-weight:700;
+  margin:0 0 6px;
+}
+
+.left p{
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:32px;
+}
+
+.field{ margin-bottom:20px; }
+
+label{
+  font-size:13px;
+  font-weight:500;
+  display:block;
+  margin-bottom:6px;
+}
+
+input,select{
+  width:100%;
+  padding:14px;
+  font-size:14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+
+input:focus,select:focus{
+  outline:none;
+  border-color:var(--primary);
+}
+
+button{
+  width:100%;
+  padding:15px;
+  border:none;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button.primary{
+  background:var(--primary);
+  color:white;
+  margin-bottom:10px;
+}
+
+button.secondary{
+  background:#f8fafc;
+  border:1px solid var(--border);
+  color:#020617;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+button.secondary:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+.locked{ background:#f8fafc; }
+
+/* RIGHT */
+.right{
+  background:#f8fafc;
+  padding:44px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.qrBox{
+  width:100%;
+  max-width:360px;
+  background:white;
+  border-radius:16px;
+  padding:28px;
+  border:1px solid var(--border);
+  text-align:center;
+}
+
+.qrBox h2{
+  font-size:18px;
+  margin-bottom:16px;
+}
+
+.qrPlaceholder{
+  width:240px;
+  height:240px;
+  border-radius:12px;
+  background:linear-gradient(
+    90deg,
+    #f1f5f9 25%,
+    #e2e8f0 37%,
+    #f1f5f9 63%
+  );
+  background-size:400% 100%;
+  animation:skeleton 1.4s infinite;
+  margin:0 auto;
+}
+
+@keyframes skeleton{
+  0%{background-position:100% 0}
+  100%{background-position:0 0}
+}
+
+#qr img{
+  width:240px;
+  height:240px;
+  border-radius:12px;
+}
+
+.upiChip{
+  margin-top:14px;
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#1e1b4b;
+  font-weight:600;
+  font-size:14px;
+  font-family:monospace;
+}
+
+.hidden{ display:none; }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- LEFT -->
+  <div class="left">
+    <h1>Payment QR</h1>
+    <p>Create secure UPI payment QR for your business</p>
+
+    <div class="field">
+      <label>Merchant Name</label>
+      <input id="name">
+    </div>
+
+    <div class="field">
+      <label>Payment Type</label>
+      <select id="type" onchange="switchType()">
+        <option value="">Select type</option>
+        <option value="upi">UPI ID</option>
+        <option value="mobile">Mobile Number</option>
+      </select>
+    </div>
+
+    <div class="field hidden" id="upiBox">
+      <label>UPI ID</label>
+      <input id="upi">
+    </div>
+
+    <div class="field hidden" id="mobileBox">
+      <label>Mobile Number</label>
+      <input id="mobile">
+    </div>
+
+    <div class="field">
+      <label>Amount</label>
+      <input id="amount" type="number">
+    </div>
+
+    <button class="primary" onclick="generateQR()">Generate QR</button>
+
+    <button class="secondary" id="downloadBtn" onclick="downloadQR()" disabled>
+      ⬇ Download QR
+    </button>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="qrBox">
+      <h2 id="pName">Merchant Name</h2>
+      <div id="qr"><div class="qrPlaceholder"></div></div>
+      <div id="pAddr"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const nameInput = document.getElementById("name");
+const typeSelect = document.getElementById("type");
+const amountInput = document.getElementById("amount");
+
+const upiBox = document.getElementById("upiBox");
+const mobileBox = document.getElementById("mobileBox");
+
+const upiInput = document.getElementById("upi");
+const mobileInput = document.getElementById("mobile");
+
+const pName = document.getElementById("pName");
+const pAddr = document.getElementById("pAddr");
+const qr = document.getElementById("qr");
+const downloadBtn = document.getElementById("downloadBtn");
+
+let qrImageURL = "";
+
+function switchType(){
+  upiBox.classList.add("hidden");
+  mobileBox.classList.add("hidden");
+  if(typeSelect.value==="upi") upiBox.classList.remove("hidden");
+  if(typeSelect.value==="mobile") mobileBox.classList.remove("hidden");
+}
+
+function generateQR(){
+  if(!nameInput.value || !typeSelect.value || !amountInput.value){
+    alert("Fill all required fields");
+    return;
+  }
+
+  nameInput.readOnly = true;
+  nameInput.classList.add("locked");
+
+  let link = "";
+  let display = "";
+
+  if(typeSelect.value==="upi"){
+    link = `upi://pay?pa=${upiInput.value}&pn=${nameInput.value}&am=${amountInput.value}&cu=INR`;
+    display = upiInput.value;
+  }
+
+  if(typeSelect.value==="mobile"){
+    link = `upi://pay?pa=${mobileInput.value}&pn=${nameInput.value}&am=${amountInput.value}&cu=INR`;
+    display = mobileInput.value;
+  }
+
+  qrImageURL = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(link)}`;
+
+  qr.innerHTML = `<img id="qrImg" src="${qrImageURL}">`;
+  pName.innerText = nameInput.value;
+  pAddr.innerHTML = `<span class="upiChip">${display}</span>`;
+  downloadBtn.disabled = false;
+}
+
+async function downloadQR(){
+  const response = await fetch(qrImageURL);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "payment-qr.png";
+  document.body.appendChild(a);
+  a.click();
+
+  URL.revokeObjectURL(url);
+  a.remove();
+}
+</script>
+
+</body>
+</html>
