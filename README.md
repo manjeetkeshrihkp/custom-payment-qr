@@ -5,13 +5,15 @@ Designed with a clean, professional fintech-style UI suitable for hackathons and
 
 ---
 
-## 🎥 Project Demo
+## 🎥 Project Demo (Click Image ▶)
 
-- ▶ **YouTube Walkthrough:**  
-  https://youtu.be/ohlGJZckXis
+[![Watch the video](https://img.youtube.com/vi/ohlGJZckXis/maxresdefault.jpg)](https://youtu.be/ohlGJZckXis)
 
-- 🌐 **Live Demo:**  
-  https://manjeetkeshrihkp.github.io/custom-payment-qr/
+---
+
+## 🌐 Live Demo
+
+👉 https://manjeetkeshrihkp.github.io/custom-payment-qr/
 
 ---
 
